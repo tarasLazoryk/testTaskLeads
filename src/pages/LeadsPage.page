@@ -1,0 +1,26 @@
+<!--
+ - Created by new on 20.06.2017.
+ -->
+
+<apex:page controller="LeadsPageController">
+    <apex:form>
+        <apex:dataTable value="{!leadWrappers}" var  = "leadWrapper" border="1" id = "table">
+                <apex:column >
+                    <apex:facet name = "header">Id</apex:facet>
+                    <apex:outputText value="{!leadWrapper.Id}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name = "header">LastName</apex:facet>
+                    <apex:outputText value="{!leadWrapper.LastName}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name = "header">
+                        <apex:inputCheckbox >
+                            <apex:actionSupport event="onchange" action="{!changeAll}" rerender="table" />
+                        </apex:inputCheckbox>
+                    </apex:facet>
+                    <apex:inputCheckbox value="{!leadWrapper.isChecked}"/>
+                </apex:column>
+        </apex:dataTable>
+    </apex:form>
+</apex:page>
