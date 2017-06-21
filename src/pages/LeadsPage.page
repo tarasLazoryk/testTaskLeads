@@ -3,24 +3,39 @@
  -->
 
 <apex:page controller="LeadsPageController">
+    <apex:form >
+            <apex:selectList value="{!rowsAmount}" size="1">
+                <apex:selectOptions value="{!rowsPerPage}"/>
+            </apex:selectList>
+        <apex:commandButton action="{!changeRowsAmount}" reRender="table" value = "Change rows amount"></apex:commandButton>
+    </apex:form>
     <apex:form>
-        <apex:dataTable value="{!leadWrappers}" var  = "leadWrapper" border="1" id = "table">
+        <apex:dataTable value="{!leadWrappersToShow}" var="lw" border="1" id="table" >
+            <apex:repeat value="{!fields}" var="f">
                 <apex:column >
-                    <apex:facet name = "header">Id</apex:facet>
-                    <apex:outputText value="{!leadWrapper.Id}"/>
+                    <apex:facet name="header">{!f.fieldPath}</apex:facet>
+                    <apex:outputText value="{!lw.lead[f.fieldPath]}" rendered="{!f.Label != 'CompanyName' && f.fieldPath != "LastName"}"/>
+                    <apex:commandLink action="{!moveToLead}" rendered="{!f.fieldPath == 'LastName'}" value="{!lw.lead[f.fieldPath]}" target = "_blank">
+                        <apex:param value="{!lw.lead["Id"]}" assignTo="{!leadId}" name = "IdParam"></apex:param>
+                    </apex:commandLink>
+                    <apex:inputText value="{!lw.lead[f.fieldPath]}" rendered="{!f.Label == 'CompanyName'}"/>
                 </apex:column>
-                <apex:column >
-                    <apex:facet name = "header">LastName</apex:facet>
-                    <apex:outputText value="{!leadWrapper.LastName}"/>
-                </apex:column>
-                <apex:column >
-                    <apex:facet name = "header">
-                        <apex:inputCheckbox >
-                            <apex:actionSupport event="onchange" action="{!changeAll}" rerender="table" />
-                        </apex:inputCheckbox>
-                    </apex:facet>
-                    <apex:inputCheckbox value="{!leadWrapper.isChecked}"/>
-                </apex:column>
+            </apex:repeat>
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:inputCheckbox >
+                        <apex:actionSupport event="onchange" action="{!changeAll}" rerender="table" />
+                    </apex:inputCheckbox>
+                </apex:facet>
+              <apex:inputCheckbox value="{!lw.isChecked}" >
+                  <apex:actionSupport action="{!changeStatus}" event="onclick" reRender="table"></apex:actionSupport>
+                  <apex:param value="{!lw.lead["Id"]}" assignTo="{!leadId}"></apex:param>
+
+              </apex:inputCheckbox>
+            </apex:column>
         </apex:dataTable>
+        <apex:commandLink value="Previous" style="padding:20px" reRender="table" action="{!previous}"></apex:commandLink>
+        <apex:commandLink value="Next" style="padding:20px" reRender="table" action="{!next}"></apex:commandLink>
+
     </apex:form>
 </apex:page>

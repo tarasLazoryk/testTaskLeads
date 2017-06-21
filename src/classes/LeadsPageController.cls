@@ -4,23 +4,126 @@
 
 public with sharing class LeadsPageController {
     public List<LeadWrapper> leadWrappers {get;set;}
+    public List<LeadWrapper> leadWrappersToShow {get; set;}
+    public List<FieldSetMember> fields {get; set;}
+    public List<SelectOption> rowsPerPage {get; set;}
+    private Boolean globalChecbox = false;
+    public Integer rowsAmount {get; set;}
+    public Integer pageCount {get; set;}
+    public Id leadID {get; set;}
+
+    public PageReference changeRowsAmount() {
+        pageCount = 0;
+        next();
+        return null;
+    }
+    public List<Schema.FieldSetMember> getFields() {
+
+        return SObjectType.Lead.fieldSets.LeadFieldSet.getFields();
+    }
+
+    public LeadsPageController() {
+        rowsAmount = 10;
+        fillRowsPerPageList();
+        pageCount = 0;
+        fillLeadWrappers();
+        next();
+    }
+
+    public PageReference changeAll() {
+        globalChecbox = !globalChecbox;
+        for (LeadWrapper leadWrapper : leadWrappers) {
+            leadWrapper.isChecked = globalChecbox;
+        }
+        return null;
+    }
+
+
+    private List<Lead> getLeads() {
+        String query = 'SELECT ';
+        for (Schema.FieldSetMember f : this.getFields()) {
+            query += f.getFieldPath() +  ', ';
+
+        }
+        query += 'Id FROM Lead';
+        return Database.query(query);
+
+    }
 
     private void fillLeadWrappers() {
         leadWrappers = new List<LeadWrapper>();
-        List<Lead> leads = [SELECT Id, LastName, CompanyName__c FROM Lead];
+        List<Lead> leads = getLeads();
+        fields = getFields();
         for (Lead lead : leads) {
             leadWrappers.add(new LeadWrapper(false,lead));
         }
     }
 
-    public LeadsPageController() {
-        fillLeadWrappers();
+    public PageReference moveToLead() {
+       // system.debug(ApexPages.currentPage().getParameters().get('IdParam'));
+        system.debug(leadID);
+        PageReference pageReference = new PageReference('/' + leadID);
+        return pageReference;
     }
-    public PageReference changeAll() {
-        for (LeadWrapper leadWrapper : leadWrappers) {
-            leadWrapper.isChecked = !leadWrapper.isChecked;
+
+    public PageReference next() {
+
+        Integer endPoint = 0;
+        if (pageCount * rowsAmount > leadWrappers.size()) {
+            return null;
+        }
+        leadWrappersToShow =  new List<LeadWrapper>();
+        if (leadWrappers.size() >= (pageCount + 1) * rowsAmount) {
+            endPoint = ( pageCount + 1) * rowsAmount;
+        } else {
+            endPoint = leadWrappers.size();
+        }
+        for (Integer i = pageCount * rowsAmount; i < endPoint; i ++ ) {
+            leadWrappersToShow.add(leadWrappers.get(i));
+            system.debug(leadWrappers.get(i));
+        }
+        pageCount ++;
+        return null;
+
+    }
+    public PageReference previous() {
+        if (pageCount <= 1) {
+            return null;
+        }
+
+        leadWrappersToShow =  new List<LeadWrapper>();
+        Integer startPoint = 0;
+        if (pageCount != 1) {
+            startPoint = (pageCount - 2) * rowsAmount;
+        }
+        for (Integer i = startPoint; i < (pageCount - 1) * rowsAmount; i++ ) {
+            leadWrappersToShow.add(leadWrappers.get(i));
+        }
+        pageCount--;
+        return null;
+
+    }
+    private void fillRowsPerPageList() {
+        rowsPerPage = new List<SelectOption>();
+        for (Integer i = 0; i <100; i++) {
+            rowsPerPage.add(new SelectOption('' + (i + 1),'' + (i + 1)));
+        }
+    }
+
+    public PageReference changeStatus() {
+        for (LeadWrapper lw : leadWrappers) {
+            if (lw.lead.Id == leadId) {
+                lw.isChecked = !lw.isChecked;
+                return null;
+            }
         }
         return null;
     }
+
+
+
+
+
+
 
 }

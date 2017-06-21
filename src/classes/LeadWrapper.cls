@@ -8,13 +8,7 @@ public with sharing class LeadWrapper {
 
     public LeadWrapper(Boolean isChecked, Lead lead) {
         this.isChecked = isChecked;
-        this.lead = lead;           }
-
-    public Id getId() {
-        return lead.Id;
-    }
-    public String getLastName() {
-        return lead.LastName;
+        this.lead = lead;
     }
 
 
