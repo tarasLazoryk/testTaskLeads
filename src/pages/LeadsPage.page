@@ -4,21 +4,25 @@
 
 <apex:page controller="LeadsPageController">
     <apex:form >
-            <apex:selectList value="{!rowsAmount}" size="1">
-                <apex:selectOptions value="{!rowsPerPage}"/>
-            </apex:selectList>
-        <apex:commandButton action="{!changeRowsAmount}" reRender="table" value = "Change rows amount"></apex:commandButton>
+        <apex:actionFunction name="changeRowsAmountFunction" action="{!changeRowsAmount}" reRender="table"/>
+        <apex:selectList value="{!rowsAmount}" size="1" onChange="changeRowsAmountFunction()">
+            <apex:selectOptions value="{!rowsPerPage}"/>
+        </apex:selectList>
     </apex:form>
     <apex:form>
-        <apex:dataTable value="{!leadWrappersToShow}" var="lw" border="1" id="table" >
-            <apex:repeat value="{!fields}" var="f">
+        <apex:dataTable value="{!leadWrappersToShow}" var="leadWrapper" border="1" id="table" >
+            <apex:repeat value="{!fields}" var="field">
                 <apex:column >
-                    <apex:facet name="header">{!f.fieldPath}</apex:facet>
-                    <apex:outputText value="{!lw.lead[f.fieldPath]}" rendered="{!f.Label != 'CompanyName' && f.fieldPath != "LastName"}"/>
-                    <apex:commandLink action="{!moveToLead}" rendered="{!f.fieldPath == 'LastName'}" value="{!lw.lead[f.fieldPath]}" target = "_blank">
-                        <apex:param value="{!lw.lead["Id"]}" assignTo="{!leadId}" name = "IdParam"></apex:param>
+                    <apex:facet name="header" >
+                        <apex:commandLink action="{!sort}" reRender="table" value="{!field.Label}">
+                            <apex:param value="{!field.fieldPath}" assignTo="{!compareField}" name="id"/>
+                        </apex:commandLink>
+                    </apex:facet>
+                    <apex:outputText value="{!leadWrapper.lead[field.fieldPath]}" rendered="{!field.Label != 'CompanyName' && field.fieldPath != "LastName"}"/>
+                    <apex:commandLink action="{!moveToLead}" rendered="{!field.fieldPath == 'LastName'}" value="{!leadWrapper.lead[field.fieldPath]}" target = "_blank">
+                        <apex:param value="{!leadWrapper.lead["Id"]}" assignTo="{!leadId}" name = "IdParam"/>
                     </apex:commandLink>
-                    <apex:inputText value="{!lw.lead[f.fieldPath]}" rendered="{!f.Label == 'CompanyName'}"/>
+                    <apex:inputText value="{!leadWrapper.lead[field.fieldPath]}" rendered="{!field.Label == 'CompanyName'}"/>
                 </apex:column>
             </apex:repeat>
             <apex:column >
@@ -27,15 +31,14 @@
                         <apex:actionSupport event="onchange" action="{!changeAll}" rerender="table" />
                     </apex:inputCheckbox>
                 </apex:facet>
-              <apex:inputCheckbox value="{!lw.isChecked}" >
-                  <apex:actionSupport action="{!changeStatus}" event="onclick" reRender="table"></apex:actionSupport>
-                  <apex:param value="{!lw.lead["Id"]}" assignTo="{!leadId}"></apex:param>
-
+              <apex:inputCheckbox value="{!leadWrapper.isChecked}" >
+                  <apex:actionSupport event="onclick" reRender="table"/>
               </apex:inputCheckbox>
             </apex:column>
         </apex:dataTable>
-        <apex:commandLink value="Previous" style="padding:20px" reRender="table" action="{!previous}"></apex:commandLink>
-        <apex:commandLink value="Next" style="padding:20px" reRender="table" action="{!next}"></apex:commandLink>
+        <apex:commandLink value="Previous" style="padding:20px" reRender="table, pageCounter" action="{!previous}"/>
+        <apex:outputText value="{!pageCount}" id = "pageCounter"/>
+        <apex:commandLink value="Next" style="padding:20px" reRender="table, pageCounter" action="{!next}"/>
 
     </apex:form>
 </apex:page>

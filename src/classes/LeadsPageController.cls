@@ -3,6 +3,7 @@
  */
 
 public with sharing class LeadsPageController {
+    public String compareField {get; set;}
     public List<LeadWrapper> leadWrappers {get;set;}
     public List<LeadWrapper> leadWrappersToShow {get; set;}
     public List<FieldSetMember> fields {get; set;}
@@ -17,12 +18,14 @@ public with sharing class LeadsPageController {
         next();
         return null;
     }
+
     public List<Schema.FieldSetMember> getFields() {
 
         return SObjectType.Lead.fieldSets.LeadFieldSet.getFields();
     }
 
     public LeadsPageController() {
+        compareField = '';
         rowsAmount = 10;
         fillRowsPerPageList();
         pageCount = 0;
@@ -110,19 +113,19 @@ public with sharing class LeadsPageController {
         }
     }
 
-    public PageReference changeStatus() {
+    public PageReference sort() {
+        System.debug(compareField);
+        compareField = ApexPages.currentPage().getParameters().get('id');
+        System.debug(ApexPages.currentPage().getParameters().get('id'));
+        system.debug(compareField);
         for (LeadWrapper lw : leadWrappers) {
-            if (lw.lead.Id == leadId) {
-                lw.isChecked = !lw.isChecked;
-                return null;
-            }
+            lw.compareField = compareField;
         }
+        pageCount--;
+        leadWrappers.sort();
+        next();
         return null;
     }
-
-
-
-
 
 
 
