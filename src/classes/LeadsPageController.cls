@@ -34,6 +34,14 @@ global class LeadsPageController {
         for (LeadWrapper leadWrapper : leadWrappers) {
             leadWrapper.setIsChecked(globalChecbox);
         }
+        if (globalChecbox) {
+            for (LeadWrapper lw : leadWrappers) {
+                leadsToConvert.add(lw.lead);
+            }
+        } else {
+            leadsToConvert = new Set<Lead>();
+        }
+
         return null;
     }
 
