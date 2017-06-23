@@ -38,9 +38,11 @@ global class LeadWrapper implements Comparable{
     private Integer compareStrings(String thisValue, String objValue) {
         return thisValue.compareTo(objValue);
     }
+
     private Integer compareNumbers(Double thisValue, Double objValue) {
         return thisValue > objValue ? -1 : thisValue == objValue ? 0 : 1;
     }
+
     private Integer compareBooleans(Boolean thisValue, Boolean objValue) {
         if (thisValue == objValue) {
             return 0;
@@ -52,7 +54,6 @@ global class LeadWrapper implements Comparable{
     }
 
     private Integer compare(Object thisObject, Object otherObject) {
-        system.debug('was here');
         if (thisObject instanceof  String) {
             return compareStrings((String)thisObject,(String)otherObject);
         } else if (thisObject instanceof Id) {

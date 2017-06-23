@@ -3,7 +3,6 @@
  -->
 
 <apex:page controller="LeadsPageController">
-    <apex:messages id = "messages"/>
     <apex:form >
         <apex:actionFunction name="changeRowsAmountFunction" action="{!changeRowsAmount}" reRender="table, pageCounter" status="submitStatus"/>
         <apex:selectList value="{!rowsAmount}" size="1" onChange="changeRowsAmountFunction()">
@@ -23,7 +22,7 @@
                 </div>
             </apex:facet>
         </apex:actionStatus>
-        
+
         <apex:dataTable value="{!leadWrappersToShow}" var="leadWrapper" border="1" id="table" >
             <apex:repeat value="{!fields}" var="field">
                 <apex:column >
@@ -55,6 +54,6 @@
         <apex:commandLink value="Previous" style="padding:20px" reRender="table, pageCounter" action="{!previous}" status="submitStatus"/>
         <apex:outputText value="{!pageCount}" id = "pageCounter"/>
         <apex:commandLink value="Next" style="padding:20px" reRender="table, pageCounter" action="{!next}" status="submitStatus"/>
-        <apex:commandButton action="{!convertLeads}" value="Convert selected" reRender="table, messages" status="submitStatus"/>
+        <apex:commandButton action="{!convertLeads}" value="Convert selected" reRender="table" status="submitStatus"/>
     </apex:form>
 </apex:page>

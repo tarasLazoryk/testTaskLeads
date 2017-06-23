@@ -10,10 +10,10 @@ global class LeadsPageController {
     public List<LeadWrapper> leadWrappersToShow {get; set;}
     public List<FieldSetMember> fields {get; set;}
     public List<SelectOption> rowsPerPage {get; set;}
-    private Boolean globalChecbox = false;
     public Integer rowsAmount {get; set;}
     public Integer pageCount {get; set;}
     public Id leadID {get; set;}
+    private Boolean globalChecbox = false;
 
     public LeadsPageController() {
         init();
@@ -89,23 +89,20 @@ global class LeadsPageController {
     }
 
     public PageReference convertLeads() {
-        try{
-            LeadStatus convertStatus = [SELECT Id, MasterLabel FROM LeadStatus WHERE IsConverted=true LIMIT 1];
-            List<Database.LeadConvert> leadConverts = new List<Database.LeadConvert>();
-            for(Lead lead : leadsToConvert) {
-                Database.LeadConvert tempLc = new Database.LeadConvert();
-                tempLc.setLeadId(lead.Id);
-                tempLc.setConvertedStatus(convertStatus.MasterLabel);
-                leadConverts.add(tempLc);
-            }
-            List<Database.LeadConvertResult> results = Database.convertLead(leadConverts);
-            for (Database.LeadConvertResult res : results) {
-                System.assert(res.isSuccess());
-            }
-        } catch (Exception ex) {
-            ApexPages.addmessage(new ApexPages.message(ApexPages.severity.WARNING,'Some of leads, u r trying to convert have been already converted!'));
 
+        LeadStatus convertStatus = [SELECT Id, MasterLabel FROM LeadStatus WHERE IsConverted=true LIMIT 1];
+        List<Database.LeadConvert> leadConverts = new List<Database.LeadConvert>();
+        for(Lead lead : leadsToConvert) {
+            Database.LeadConvert tempLc = new Database.LeadConvert();
+            tempLc.setLeadId(lead.Id);
+            tempLc.setConvertedStatus(convertStatus.MasterLabel);
+            leadConverts.add(tempLc);
         }
+        List<Database.LeadConvertResult> results = Database.convertLead(leadConverts);
+        for (Database.LeadConvertResult res : results) {
+            System.assert(res.isSuccess());
+        }
+
         fillLeadWrappers();
         recalculateVisibleLeadWrapers();
         return null;
@@ -165,8 +162,5 @@ global class LeadsPageController {
             }
         }
     }
-
-
-
 
 }
