@@ -5,17 +5,26 @@ global class LeadWrapper implements Comparable{
 
     public String compareField {get; set;}
     public Lead lead {get; set;}
-    public Boolean isChecked{get;set;}
+    private Boolean isChecked;
+    private LeadsPageController leadPageController;
 
-    public LeadWrapper(Boolean isChecked, Lead lead) {
+    public LeadWrapper(Boolean isChecked, Lead lead, LeadsPageController leadPageController) {
+        this.leadPageController = leadPageController;
         this.isChecked = isChecked;
         this.lead = lead;
     }
 
+    public Boolean getIsChecked() {
+        return isChecked;
+    }
+
+    public void setIsChecked(Boolean isChecked) {
+        this.isChecked = isChecked;
+        leadPageController.addToList(lead,isChecked);
+    }
     global Integer compareTo(Object o) {
         LeadWrapper lw = (LeadWrapper)o;
         if (lead.get(compareField) != null && lw.lead.get(compareField) != null) {
-
             return (compare(lead.get(compareField), lw.lead.get(compareField)));
         } else if (lead.get(compareField) == null) {
             return  1;

@@ -2,7 +2,9 @@
  * Created by new on 20.06.2017.
  */
 
-public with sharing class LeadsPageController {
+global class LeadsPageController {
+    public Set<Lead> leadsToConvert {get;set;}
+    public String inputedCompanyName {get; set;}
     public String compareField {get; set;}
     public List<LeadWrapper> leadWrappers {get;set;}
     public List<LeadWrapper> leadWrappersToShow {get; set;}
@@ -13,6 +15,10 @@ public with sharing class LeadsPageController {
     public Integer pageCount {get; set;}
     public Id leadID {get; set;}
 
+    public LeadsPageController() {
+        init();
+    }
+
     public PageReference changeRowsAmount() {
         pageCount = 0;
         next();
@@ -20,57 +26,24 @@ public with sharing class LeadsPageController {
     }
 
     public List<Schema.FieldSetMember> getFields() {
-
         return SObjectType.Lead.fieldSets.LeadFieldSet.getFields();
     }
 
-    public LeadsPageController() {
-        compareField = '';
-        rowsAmount = 10;
-        fillRowsPerPageList();
-        pageCount = 0;
-        fillLeadWrappers();
-        next();
-    }
-
-    public PageReference changeAll() {
+    public PageReference changeAllCheckBoxes() {
         globalChecbox = !globalChecbox;
         for (LeadWrapper leadWrapper : leadWrappers) {
-            leadWrapper.isChecked = globalChecbox;
+            leadWrapper.setIsChecked(globalChecbox);
         }
         return null;
     }
 
-
-    private List<Lead> getLeads() {
-        String query = 'SELECT ';
-        for (Schema.FieldSetMember f : this.getFields()) {
-            query += f.getFieldPath() +  ', ';
-
-        }
-        query += 'Id FROM Lead';
-        return Database.query(query);
-
-    }
-
-    private void fillLeadWrappers() {
-        leadWrappers = new List<LeadWrapper>();
-        List<Lead> leads = getLeads();
-        fields = getFields();
-        for (Lead lead : leads) {
-            leadWrappers.add(new LeadWrapper(false,lead));
-        }
-    }
-
     public PageReference moveToLead() {
-       // system.debug(ApexPages.currentPage().getParameters().get('IdParam'));
         system.debug(leadID);
         PageReference pageReference = new PageReference('/' + leadID);
         return pageReference;
     }
 
     public PageReference next() {
-
         Integer endPoint = 0;
         if (pageCount * rowsAmount > leadWrappers.size()) {
             return null;
@@ -93,7 +66,6 @@ public with sharing class LeadsPageController {
         if (pageCount <= 1) {
             return null;
         }
-
         leadWrappersToShow =  new List<LeadWrapper>();
         Integer startPoint = 0;
         if (pageCount != 1) {
@@ -106,26 +78,94 @@ public with sharing class LeadsPageController {
         return null;
 
     }
-    private void fillRowsPerPageList() {
-        rowsPerPage = new List<SelectOption>();
-        for (Integer i = 0; i <100; i++) {
-            rowsPerPage.add(new SelectOption('' + (i + 1),'' + (i + 1)));
-        }
-    }
 
     public PageReference sort() {
-        System.debug(compareField);
-        compareField = ApexPages.currentPage().getParameters().get('id');
-        System.debug(ApexPages.currentPage().getParameters().get('id'));
-        system.debug(compareField);
         for (LeadWrapper lw : leadWrappers) {
             lw.compareField = compareField;
         }
-        pageCount--;
         leadWrappers.sort();
-        next();
+        recalculateVisibleLeadWrapers();
         return null;
     }
+
+    public PageReference convertLeads() {
+        try{
+            LeadStatus convertStatus = [SELECT Id, MasterLabel FROM LeadStatus WHERE IsConverted=true LIMIT 1];
+            List<Database.LeadConvert> leadConverts = new List<Database.LeadConvert>();
+            for(Lead lead : leadsToConvert) {
+                Database.LeadConvert tempLc = new Database.LeadConvert();
+                tempLc.setLeadId(lead.Id);
+                tempLc.setConvertedStatus(convertStatus.MasterLabel);
+                leadConverts.add(tempLc);
+            }
+            List<Database.LeadConvertResult> results = Database.convertLead(leadConverts);
+            for (Database.LeadConvertResult res : results) {
+                System.assert(res.isSuccess());
+            }
+        } catch (Exception ex) {
+            ApexPages.addmessage(new ApexPages.message(ApexPages.severity.WARNING,'Some of leads, u r trying to convert have been already converted!'));
+
+        }
+        fillLeadWrappers();
+        recalculateVisibleLeadWrapers();
+        return null;
+    }
+
+    private void recalculateVisibleLeadWrapers() {
+        pageCount--;
+        next();
+    }
+
+    private void init() {
+        leadsToConvert = new Set<Lead>();
+        compareField = '';
+        rowsAmount = 10;
+        fillRowsPerPageList();
+        pageCount = 0;
+        fillLeadWrappers();
+        next();
+    }
+
+    private void fillRowsPerPageList() {
+        rowsPerPage = new List<SelectOption>();
+        rowsPerPage.add(new SelectOption('5','5'));
+        rowsPerPage.add(new SelectOption('10','10'));
+        rowsPerPage.add(new SelectOption('25','25'));
+        rowsPerPage.add(new SelectOption('50','50'));
+        rowsPerPage.add(new SelectOption('100','100'));
+    }
+
+    private void fillLeadWrappers() {
+        leadWrappers = new List<LeadWrapper>();
+        List<Lead> leads = getLeads();
+        fields = getFields();
+        for (Lead lead : leads) {
+            leadWrappers.add(new LeadWrapper(false,lead,this));
+        }
+    }
+
+    private List<Lead> getLeads() {
+        String query = 'SELECT ';
+        for (Schema.FieldSetMember f : this.getFields()) {
+            query += f.getFieldPath() +  ', ';
+
+        }
+        query += 'Id FROM Lead WHERE Status != \'Closed - Converted\'';
+        return Database.query(query);
+
+    }
+
+    public void addToList(Lead newLead, Boolean isChecked) {
+
+        if (leadsToConvert!=null) {
+            if (isChecked) {
+                leadsToConvert.add(newLead);
+            } else {
+                leadsToConvert.remove(newLead);
+            }
+        }
+    }
+
 
 
 

@@ -3,42 +3,58 @@
  -->
 
 <apex:page controller="LeadsPageController">
+    <apex:messages id = "messages"/>
     <apex:form >
-        <apex:actionFunction name="changeRowsAmountFunction" action="{!changeRowsAmount}" reRender="table"/>
+        <apex:actionFunction name="changeRowsAmountFunction" action="{!changeRowsAmount}" reRender="table, pageCounter" status="submitStatus"/>
         <apex:selectList value="{!rowsAmount}" size="1" onChange="changeRowsAmountFunction()">
             <apex:selectOptions value="{!rowsPerPage}"/>
         </apex:selectList>
-    </apex:form>
-    <apex:form>
+
+        <apex:actionStatus id="submitStatus">
+            <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.75; z-index: 1000; background-color: black;">
+                    &nbsp;
+                </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Please Wait ...</span>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        
         <apex:dataTable value="{!leadWrappersToShow}" var="leadWrapper" border="1" id="table" >
             <apex:repeat value="{!fields}" var="field">
                 <apex:column >
                     <apex:facet name="header" >
-                        <apex:commandLink action="{!sort}" reRender="table" value="{!field.Label}">
-                            <apex:param value="{!field.fieldPath}" assignTo="{!compareField}" name="id"/>
+                        <apex:commandLink action="{!sort}" reRender="table" value="{!field.Label}" status="submitStatus">
+                            <apex:param value="{!field.fieldPath}" assignTo="{!compareField}" name="id" />
                         </apex:commandLink>
                     </apex:facet>
                     <apex:outputText value="{!leadWrapper.lead[field.fieldPath]}" rendered="{!field.Label != 'CompanyName' && field.fieldPath != "LastName"}"/>
                     <apex:commandLink action="{!moveToLead}" rendered="{!field.fieldPath == 'LastName'}" value="{!leadWrapper.lead[field.fieldPath]}" target = "_blank">
                         <apex:param value="{!leadWrapper.lead["Id"]}" assignTo="{!leadId}" name = "IdParam"/>
                     </apex:commandLink>
-                    <apex:inputText value="{!leadWrapper.lead[field.fieldPath]}" rendered="{!field.Label == 'CompanyName'}"/>
+                    <apex:inputField value="{!leadWrapper.lead[field.fieldPath]}"  rendered="{!field.Label == 'CompanyName'}">
+                        <apex:actionSupport event="onchange" reRender="table"></apex:actionSupport>
+                    </apex:inputField>
                 </apex:column>
             </apex:repeat>
             <apex:column >
                 <apex:facet name="header">
                     <apex:inputCheckbox >
-                        <apex:actionSupport event="onchange" action="{!changeAll}" rerender="table" />
+                        <apex:actionSupport event="onchange" action="{!changeAllCheckBoxes}" rerender="table" status="submitStatus"/>
                     </apex:inputCheckbox>
                 </apex:facet>
               <apex:inputCheckbox value="{!leadWrapper.isChecked}" >
-                  <apex:actionSupport event="onclick" reRender="table"/>
+                  <apex:actionSupport event="onclick" reRender="table" status="submitStatus"/>
               </apex:inputCheckbox>
             </apex:column>
         </apex:dataTable>
-        <apex:commandLink value="Previous" style="padding:20px" reRender="table, pageCounter" action="{!previous}"/>
+        <apex:commandLink value="Previous" style="padding:20px" reRender="table, pageCounter" action="{!previous}" status="submitStatus"/>
         <apex:outputText value="{!pageCount}" id = "pageCounter"/>
-        <apex:commandLink value="Next" style="padding:20px" reRender="table, pageCounter" action="{!next}"/>
-
+        <apex:commandLink value="Next" style="padding:20px" reRender="table, pageCounter" action="{!next}" status="submitStatus"/>
+        <apex:commandButton action="{!convertLeads}" value="Convert selected" reRender="table, messages" status="submitStatus"/>
     </apex:form>
 </apex:page>
